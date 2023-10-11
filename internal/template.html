@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+
+        <!-- DaisyUI -->
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.2/dist/full.css" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <!-- DataTables -->
+        <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    </head>
+    <body>
+        <div class="container mx-auto flex flex-col w-full">
+            <div class="grid place-items-center">
+                <div class="navbar bg-base-100">
+                    <div class="flex-1">
+                        <a class="btn btn-ghost normal-case text-xl">repgen report</a>
+                    </div>
+                    <div class="flex-none">
+                        <ul class="menu menu-horizontal px-1">
+                            <li><a class="btn btn-success align-middle">Passed: {{ .Passed }}</a></li>
+                            <li><a class="btn btn-error   align-middle">Failed: {{ .Failed }}</a></li>
+                            <li><a class="btn btn-warning align-middle">Skipped: {{ .Skipped }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div> 
+            <div class="divider"></div> 
+            <div class="grid h-20 card bg-base-300 rounded-box place-items-center">
+                <div class="w-full max-w-full">
+                    <div class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-soft-xl rounded-2xl bg-clip-border">
+                        <div class="table-responsive">
+                            <table class="table table-flush text-slate-500 table-zebra" datatable id="datatable-search">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Package</th>
+                                        <th>Status</th>
+                                        <th>Output</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Iterate over tests with Go template language -->
+                                    {{ range $i, $t := .Tests }}
+
+                                    <!-- Begin with different tr's with CSS classes depending on the status of the test -->
+                                    <tr>
+                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Name }}" data-filter="{{ $t.Name }}">{{ $t.Name }}</td>
+                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Package }}" data-filter="{{ $t.Package }}">{{ $t.Package }}</td>
+                                        <td class="font-normal leading-normal text-sm" data-order="{{ $t.Status }}" data-filter="status:{{ $t.Status }}">{{ $t.FancyStatus }}</td>
+                                        <td class="font-normal leading-normal text-sm">
+
+                                            <!-- The button to open modal -->
+                                            <label for="modal_{{ $i }}" class="btn btn-primary">View output</label>
+
+                                            <!-- Put this part before </body> tag -->
+                                            <input type="checkbox" id="modal_{{ $i }}" class="modal-toggle" />
+                                            <div class="modal">
+                                                <div class="modal-box w-11/12 max-w-5xl">
+                                                    <h3 class="text-lg font-bold">
+                                                        Output for "{{ $t.Name }}"
+                                                    </h3>
+                                                    <p class="py-4"><div class="mockup-code">
+                                                        <!-- Go through output for each line, and print it -->
+                                                        {{ range $j, $l := $t.Output }}
+                                                        <pre data-prefix="{{ $j }}"><code>{{ $l }}</code></pre>
+                                                        {{end}}
+
+                                                    </div></p>
+                                                </div>
+                                                <label class="modal-backdrop" for="modal_{{ $i }}">Close</label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {{ end }}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+        </div>
+        <!-- ... -->
+        <script defer>
+            var selectedPackage = "all"
+
+            function setSelectedPackage(package) {
+                selectedPackage = package
+            }
+
+            new DataTable('#datatable-search', {
+                pageLength: 25,
+                order: [[2, 'asc']],
+            });
+        </script>
+        </body>
+</html>
