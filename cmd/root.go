@@ -13,7 +13,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "repgen [-i input] [-o output]",
+	Use:   "repgen",
 	Short: "repgen is a test report generation tool",
 	Long: `repgen generates a single test report HTML file based on output
 	from running 'go test -json'.
