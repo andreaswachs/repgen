@@ -307,6 +307,7 @@ func (t *Test) ToSingleTest(p string) *SingleTest {
 	return &SingleTest{
 		Name:        t.Name,
 		Elapsed:     time.Duration(t.Elapsed * float64(time.Second)).String(),
+		ElapsedSec:  t.Elapsed,
 		Time:        t.Time,
 		Output:      strings.Split(t.Output, "\n"),
 		Status:      t.Status.String(),

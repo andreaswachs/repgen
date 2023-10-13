@@ -41,6 +41,7 @@ traversing these nested recursive structures
 type SingleTest struct {
 	Name        string
 	Elapsed     string
+	ElapsedSec  float64
 	Time        time.Time
 	Output      []string
 	Status      string
