@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"fmt"
 	"strings"
+	"time"
 )
 
 // Initialises an empty Tests struct
@@ -169,8 +169,13 @@ func (t *Tests) addPass(f TestOutputLine) error {
 
 		if f.Test == "" {
 			// The package itself passed
+			pack.Elapsed = f.Elapsed
 			pack.Status = Pass
 			return nil
+		}
+
+		if pack.Tests[f.Test].Elapsed < f.Elapsed {
+			pack.Tests[f.Test].Elapsed = f.Elapsed
 		}
 
 		// We have a top level test
@@ -187,6 +192,9 @@ func (t *Tests) addPass(f TestOutputLine) error {
 		}
 
 		test.Status = Pass
+		if test.Elapsed < f.Elapsed {
+			test.Elapsed = f.Elapsed
+		}
 	}
 
 	return nil
@@ -202,11 +210,16 @@ func (t *Tests) addFail(f TestOutputLine) error {
 		if f.Test == "" {
 			// The package itself failed
 			pack.Status = Fail
+			pack.Elapsed = f.Elapsed
 			return nil
 		}
 
 		if pack.Tests[f.Test] == nil {
 			pack.Tests[f.Test] = newNode(f)
+		}
+
+		if pack.Tests[f.Test].Elapsed < f.Elapsed {
+			pack.Tests[f.Test].Elapsed = f.Elapsed
 		}
 
 		pack.Tests[f.Test].Status = Fail
@@ -218,6 +231,9 @@ func (t *Tests) addFail(f TestOutputLine) error {
 			test.Status = Fail
 		}
 
+		if test.Elapsed < f.Elapsed {
+			test.Elapsed = f.Elapsed
+		}
 		test.Status = Fail
 	}
 
@@ -281,10 +297,6 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 			}
 		}
 
-		if test == nil {
-			fmt.Println("test is nil")
-		}
-
 		test.Output += f.Output
 	}
 
@@ -294,7 +306,7 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 func (t *Test) ToSingleTest(p string) *SingleTest {
 	return &SingleTest{
 		Name:        t.Name,
-		Elapsed:     t.Elapsed,
+		Elapsed:     time.Duration(t.Elapsed * float64(time.Second)).String(),
 		Time:        t.Time,
 		Output:      strings.Split(t.Output, "\n"),
 		Status:      t.Status.String(),

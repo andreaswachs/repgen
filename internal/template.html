@@ -42,6 +42,7 @@
                                         <th>Name</th>
                                         <th>Package</th>
                                         <th>Status</th>
+                                        <th>Elapsed</th>
                                         <th>Output</th>
                                     </tr>
                                 </thead>
@@ -54,6 +55,7 @@
                                         <td class="font-normal leading-normal text-sm" data-search="{{ $t.Name }}" data-filter="{{ $t.Name }}">{{ $t.Name }}</td>
                                         <td class="font-normal leading-normal text-sm" data-search="{{ $t.Package }}" data-filter="{{ $t.Package }}">{{ $t.Package }}</td>
                                         <td class="font-normal leading-normal text-sm" data-order="{{ $t.Status }}" data-filter="status:{{ $t.Status }}">{{ $t.FancyStatus }}</td>
+                                        <td class="font-normal leading-normal text-sm" data-order="{{ $t.Elapsed }}" data-filter="elapsed:{{ $t.Elapsed }}">{{ $t.Elapsed }}</td>
                                         <td class="font-normal leading-normal text-sm">
 
                                             <!-- The button to open modal -->
