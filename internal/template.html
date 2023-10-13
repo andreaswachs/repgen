@@ -52,8 +52,8 @@
 
                                     <!-- Begin with different tr's with CSS classes depending on the status of the test -->
                                     <tr>
-                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Name }}" data-filter="{{ $t.Name }}">{{ $t.Name }}</td>
-                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Package }}" data-filter="{{ $t.Package }}">{{ $t.Package }}</td>
+                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Name }}" data-filter="name:{{ $t.Name }}">{{ $t.Name }}</td>
+                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Package }}" data-filter="package:{{ $t.Package }}">{{ $t.Package }}</td>
                                         <td class="font-normal leading-normal text-sm" data-order="{{ $t.Status }}" data-filter="status:{{ $t.Status }}">{{ $t.FancyStatus }}</td>
                                         <td class="font-normal leading-normal text-sm" data-order="{{ $t.Elapsed }}" data-filter="elapsed:{{ $t.Elapsed }}">{{ $t.Elapsed }}</td>
                                         <td class="font-normal leading-normal text-sm">
