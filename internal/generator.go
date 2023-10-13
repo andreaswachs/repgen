@@ -304,6 +304,12 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 }
 
 func (t *Test) ToSingleTest(p string) *SingleTest {
+
+	// All unknown status tests are failed tests (that is the assumption at least)
+	if t.Status == Unknown {
+		t.Status = Fail
+	}
+
 	return &SingleTest{
 		Name:        t.Name,
 		Elapsed:     time.Duration(t.Elapsed * float64(time.Second)).String(),
