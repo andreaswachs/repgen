@@ -140,19 +140,32 @@ func (t *Tests) addStart(f TestOutputLine) error {
 
 func (t *Tests) addRun(f TestOutputLine) error {
 	// We assume that the package exists
-	pack := t.Packages[f.Pack]
+	pack, ok := t.Packages[f.Pack]
+	if !ok {
+		pack = TestPackage{}
+		t.Packages[f.Pack] = pack
+	}
 	tokens := strings.Split(f.Test, "/")
 	if len(tokens) == 1 {
-		// We have a top level test
+		// We have a top-level test
+		if pack.Tests == nil {
+			pack.Tests = make(map[string]*Test)
+		}
 		pack.Tests[f.Test] = newNode(f)
 	} else {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
+		if test == nil {
+			test = newNode(f)
+			pack.Tests[tokens[0]] = test
+		}
 		for i := 1; i < len(tokens); i++ {
+			if test.NestedTests == nil {
+				test.NestedTests = make(map[string]*Test)
+			}
 			if _, ok := test.NestedTests[tokens[i]]; !ok {
 				test.NestedTests[tokens[i]] = newNode(f)
 			}
-
 			test = test.NestedTests[tokens[i]]
 		}
 	}
@@ -163,32 +176,45 @@ func (t *Tests) addRun(f TestOutputLine) error {
 func (t *Tests) addPass(f TestOutputLine) error {
 	// We assume that the package exists
 	// We only set passed on the leaf
-	pack := t.Packages[f.Pack]
+	pack, ok := t.Packages[f.Pack]
+	if !ok {
+		pack = TestPackage{}
+		t.Packages[f.Pack] = pack
+	}
 	tokens := strings.Split(f.Test, "/")
 	if len(tokens) == 1 {
-
 		if f.Test == "" {
 			// The package itself passed
 			pack.Elapsed = f.Elapsed
 			pack.Status = Pass
 			return nil
 		}
-
+		if pack.Tests == nil {
+			pack.Tests = make(map[string]*Test)
+		}
+		if pack.Tests[f.Test] == nil {
+			pack.Tests[f.Test] = newNode(f)
+		}
 		if pack.Tests[f.Test].Elapsed < f.Elapsed {
 			pack.Tests[f.Test].Elapsed = f.Elapsed
 		}
-
-		// We have a top level test
 		pack.Tests[f.Test].Status = Pass
 	} else {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
+		if test == nil {
+			test = newNode(f)
+			pack.Tests[tokens[0]] = test
+		}
 		for i := 1; i < len(tokens); i++ {
+			if test.NestedTests == nil {
+				test.NestedTests = make(map[string]*Test)
+			}
 			if _, ok := test.NestedTests[tokens[i]]; !ok {
 				test.NestedTests[tokens[i]] = newNode(f)
 			}
+			test = test.NestedTests[tokens[i]]
 		}
-
 		test.Status = Pass
 		if test.Elapsed < f.Elapsed {
 			test.Elapsed = f.Elapsed
@@ -200,39 +226,47 @@ func (t *Tests) addPass(f TestOutputLine) error {
 
 func (t *Tests) addFail(f TestOutputLine) error {
 	// We assume that the package exists, we flag all nodes until the leaf as failed
-	pack := t.Packages[f.Pack]
+	pack, ok := t.Packages[f.Pack]
+	if !ok {
+		pack = TestPackage{}
+		t.Packages[f.Pack] = pack
+	}
 	tokens := strings.Split(f.Test, "/")
 	if len(tokens) == 1 {
-		// We have a top level test
-
+		// We have a top-level test
 		if f.Test == "" {
 			// The package itself failed
 			pack.Status = Fail
 			pack.Elapsed = f.Elapsed
 			return nil
 		}
-
+		if pack.Tests == nil {
+			pack.Tests = make(map[string]*Test)
+		}
 		if pack.Tests[f.Test] == nil {
 			pack.Tests[f.Test] = newNode(f)
 		}
-
 		if pack.Tests[f.Test].Elapsed < f.Elapsed {
 			pack.Tests[f.Test].Elapsed = f.Elapsed
 		}
-
 		pack.Tests[f.Test].Status = Fail
 	} else {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
+		if test == nil {
+			test = newNode(f)
+			pack.Tests[tokens[0]] = test
+		}
 		for i := 1; i < len(tokens); i++ {
+			if test.NestedTests == nil {
+				test.NestedTests = make(map[string]*Test)
+			}
 			if _, ok := test.NestedTests[tokens[i]]; !ok {
 				test.NestedTests[tokens[i]] = newNode(f)
 			}
-
 			test = test.NestedTests[tokens[i]]
 			test.Status = Fail
 		}
-
 		if test.Elapsed < f.Elapsed {
 			test.Elapsed = f.Elapsed
 		}
@@ -244,26 +278,37 @@ func (t *Tests) addFail(f TestOutputLine) error {
 
 func (t *Tests) addSkip(f TestOutputLine) error {
 	// We assume that the package exists, we flag only the given test as skipped
-	pack := t.Packages[f.Pack]
+	pack, ok := t.Packages[f.Pack]
+	if !ok {
+		pack = TestPackage{}
+		t.Packages[f.Pack] = pack
+	}
 	tokens := strings.Split(f.Test, "/")
 	if len(tokens) == 1 {
-		// We have a top level test
+		// We have a top-level test
+		if pack.Tests == nil {
+			pack.Tests = make(map[string]*Test)
+		}
 		if pack.Tests[f.Test] == nil {
 			pack.Tests[f.Test] = newNode(f)
 		}
-
 		pack.Tests[f.Test].Status = Skip
 	} else {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
+		if test == nil {
+			test = newNode(f)
+			pack.Tests[tokens[0]] = test
+		}
 		for i := 1; i < len(tokens); i++ {
+			if test.NestedTests == nil {
+				test.NestedTests = make(map[string]*Test)
+			}
 			if _, ok := test.NestedTests[tokens[i]]; !ok {
 				test.NestedTests[tokens[i]] = newNode(f)
 			}
-
 			test = test.NestedTests[tokens[i]]
 		}
-
 		test.Status = Skip
 	}
 
@@ -272,17 +317,22 @@ func (t *Tests) addSkip(f TestOutputLine) error {
 
 func (t *Tests) addOutput(f TestOutputLine) error {
 	// We assume that the package exists. We append output to the leaf
-	pack := t.Packages[f.Pack]
-
+	pack, ok := t.Packages[f.Pack]
+	if !ok {
+		pack = TestPackage{}
+		t.Packages[f.Pack] = pack
+	}
 	if f.Test == "" {
 		// Output for a whole package, append to package itself
 		pack.Output += f.Output
 		return nil
 	}
-
 	tokens := strings.Split(f.Test, "/")
 	if len(tokens) == 1 {
-		// We have a top level test
+		// We have a top-level test
+		if pack.Tests == nil {
+			pack.Tests = make(map[string]*Test)
+		}
 		if pack.Tests[f.Test] == nil {
 			pack.Tests[f.Test] = newNode(f)
 		}
@@ -294,14 +344,15 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 			test = newNode(f)
 			pack.Tests[tokens[0]] = test
 		}
-
 		for i := 1; i < len(tokens); i++ {
-			test = test.NestedTests[tokens[i]]
+			if test.NestedTests == nil {
+				test.NestedTests = make(map[string]*Test)
+			}
 			if _, ok := test.NestedTests[tokens[i]]; !ok {
 				test.NestedTests[tokens[i]] = newNode(f)
 			}
+			test = test.NestedTests[tokens[i]]
 		}
-
 		test.Output += f.Output
 	}
 
