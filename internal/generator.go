@@ -184,10 +184,8 @@ func (t *Tests) addPass(f TestOutputLine) error {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
 		for i := 1; i < len(tokens); i++ {
-			test = test.NestedTests[tokens[i]]
-			if test == nil {
-				test = newNode(f)
-				test.NestedTests[tokens[i]] = test
+			if _, ok := test.NestedTests[tokens[i]]; !ok {
+				test.NestedTests[tokens[i]] = newNode(f)
 			}
 		}
 
@@ -227,6 +225,10 @@ func (t *Tests) addFail(f TestOutputLine) error {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
 		for i := 1; i < len(tokens); i++ {
+			if _, ok := test.NestedTests[tokens[i]]; !ok {
+				test.NestedTests[tokens[i]] = newNode(f)
+			}
+
 			test = test.NestedTests[tokens[i]]
 			test.Status = Fail
 		}
@@ -255,6 +257,10 @@ func (t *Tests) addSkip(f TestOutputLine) error {
 		// We have a nested test
 		test := pack.Tests[tokens[0]]
 		for i := 1; i < len(tokens); i++ {
+			if _, ok := test.NestedTests[tokens[i]]; !ok {
+				test.NestedTests[tokens[i]] = newNode(f)
+			}
+
 			test = test.NestedTests[tokens[i]]
 		}
 
@@ -291,9 +297,8 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 
 		for i := 1; i < len(tokens); i++ {
 			test = test.NestedTests[tokens[i]]
-			if test == nil {
-				test = newNode(f)
-				test.NestedTests[tokens[i]] = test
+			if _, ok := test.NestedTests[tokens[i]]; !ok {
+				test.NestedTests[tokens[i]] = newNode(f)
 			}
 		}
 
@@ -304,7 +309,6 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 }
 
 func (t *Test) ToSingleTest(p string) *SingleTest {
-
 	// All unknown status tests are failed tests (that is the assumption at least)
 	if t.Status == Unknown {
 		t.Status = Fail
