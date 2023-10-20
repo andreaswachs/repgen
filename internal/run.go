@@ -20,7 +20,13 @@ func Run(inReader io.Reader, outFilename string) {
 		panic(err)
 	}
 
-	tmpl, err := template.New("template").Parse(templateHTML)
+	funcMap := template.FuncMap{
+		"sumTests": func(a int, b int, c int) int {
+			return a + b + c
+		},
+	}
+
+	tmpl, err := template.New("template").Funcs(funcMap).Parse(templateHTML)
 	if err != nil {
 		panic(err)
 	}

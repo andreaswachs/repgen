@@ -24,9 +24,10 @@
                     </div>
                     <div class="flex-none">
                         <ul class="menu menu-horizontal px-1">
-                            <li><a class="btn btn-success align-middle">Passed: {{ .Passed }}</a></li>
-                            <li><a class="btn btn-error   align-middle">Failed: {{ .Failed }}</a></li>
-                            <li><a class="btn btn-warning align-middle">Skipped: {{ .Skipped }}</a></li>
+                            <li><a class="btn btn-primary align-middle" onclick="table.column(2).search('(pass|fail|skip)', true, false).draw()">All: {{ sumTests .Passed .Failed .Skipped }}</a></li>
+                            <li><a class="btn btn-success align-middle" onclick="table.column(2).search('pass', true, false).draw()">Passed: {{ .Passed }}</a></li>
+                            <li><a class="btn btn-error   align-middle" onclick="table.column(2).search('fail', true, false).draw()">Failed: {{ .Failed }}</a></li>
+                            <li><a class="btn btn-warning align-middle" onclick="table.column(2).search('skip', true, false).draw()">Skipped: {{ .Skipped }}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -92,7 +93,7 @@
             </div>
         </div>
         <script defer>
-            new DataTable('#datatable-search', {
+            var table = new DataTable('#datatable-search', {
                 pageLength: 25,
                 order: [[2, 'asc']],
             });
