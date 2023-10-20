@@ -53,6 +53,7 @@ type SingleTest struct {
 A data transfer object that moves test into the report template
 */
 type TemplateData struct {
+	Dependencies map[string]string
 	Packages []string
 	Tests    []*SingleTest
 	Passed   int

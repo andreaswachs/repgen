@@ -5,15 +5,28 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+        <!-- JQuery -->
+        <script>
+            {{ index .Dependencies "jquery.js" }}
+        </script>
 
         <!-- DaisyUI -->
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.2/dist/full.css" rel="stylesheet" type="text/css" />
-        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            {{ index .Dependencies "daisyui.css" }}
+        </style>
+
+        <!-- Tailwind -->
+        <script>
+            {{ index .Dependencies "tailwind.js" }}
+        </script>
 
         <!-- DataTables -->
-        <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css" />
-        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+        <style>
+            {{ index .Dependencies "datatables.css" | raw }}
+        </style>
+        <script>
+            {{ index .Dependencies "datatables.js" }}
+        </script>
     </head>
     <body>
         <div class="container mx-auto flex flex-col w-full">
@@ -24,7 +37,7 @@
                     </div>
                     <div class="flex-none">
                         <ul class="menu menu-horizontal px-1">
-                            <li><a class="btn btn-primary align-middle" onclick="table.column(2).search('(pass|fail|skip)', true, false).draw()">All: {{ sumTests .Passed .Failed .Skipped }}</a></li>
+                            <li><a class="btn btn-primary align-middle" onclick="table.column(2).search('(pass|fail|skip|unknown)', true, false).draw()">All: {{ sumTests .Passed .Failed .Skipped }}</a></li>
                             <li><a class="btn btn-success align-middle" onclick="table.column(2).search('pass', true, false).draw()">Passed: {{ .Passed }}</a></li>
                             <li><a class="btn btn-error   align-middle" onclick="table.column(2).search('fail', true, false).draw()">Failed: {{ .Failed }}</a></li>
                             <li><a class="btn btn-warning align-middle" onclick="table.column(2).search('skip', true, false).draw()">Skipped: {{ .Skipped }}</a></li>
@@ -74,7 +87,6 @@
                                                         {{ range $j, $l := $t.Output }}
                                                         <pre data-prefix="{{ $j }}"><code>{{ $l }}</code></pre>
                                                         {{end}}
-
                                                     </div></p>
                                                 </div>
                                                 <label class="modal-backdrop" for="modal_{{ $i }}">Close</label>
@@ -87,12 +99,9 @@
                         </div>
                     </div>
                 </div>
-
-
-
             </div>
         </div>
-        <script defer>
+        <script>
             var table = new DataTable('#datatable-search', {
                 pageLength: 25,
                 order: [[2, 'asc']],

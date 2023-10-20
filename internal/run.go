@@ -3,13 +3,36 @@ package internal
 import (
 	"bufio"
 	_ "embed"
-	"html/template"
 	"io"
 	"os"
+	"text/template"
 )
 
 //go:embed template.html
 var templateHTML string
+
+//go:embed daisyui.css
+var daisyuiCSS string
+
+//go:embed jquery.js
+var jqueryJS string
+
+//go:embed tailwind.js
+var tailwindJS string
+
+//go:embed datatables.js
+var datatablesJS string
+
+//go:embed datatables.css
+var datatablesCSS string
+
+var dependencies = map[string]string{
+	"daisyui.css":    daisyuiCSS,
+	"jquery.js":      jqueryJS,
+	"tailwind.js":    tailwindJS,
+	"datatables.js":  datatablesJS,
+	"datatables.css": datatablesCSS,
+}
 
 func Run(inReader io.Reader, outFilename string) {
 	tree := NewTests()
@@ -43,6 +66,7 @@ func Run(inReader io.Reader, outFilename string) {
 		panic(err)
 	}
 
+	templateStruct.Dependencies = dependencies
 	err = tmpl.ExecuteTemplate(fileWriter, "template", templateStruct)
 	if err != nil {
 		panic(err)
