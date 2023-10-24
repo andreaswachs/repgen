@@ -1,5 +1,5 @@
 package internal
 
 const (
-	APP_VERSION = "0.2.0"
+	APP_VERSION = "0.5.0"
 )

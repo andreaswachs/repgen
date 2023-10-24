@@ -3,6 +3,7 @@ package internal
 import (
 	"bufio"
 	_ "embed"
+	"fmt"
 	"io"
 	"os"
 	"text/template"
@@ -40,7 +41,8 @@ func Run(inReader io.Reader, outFilename string) {
 		return tree.AddField(f)
 	})
 	if err != nil {
-		panic(err)
+		fmt.Printf("An error occurred while parsing the test output: %s\n", err)
+		os.Exit(1)
 	}
 
 	funcMap := template.FuncMap{
@@ -51,25 +53,28 @@ func Run(inReader io.Reader, outFilename string) {
 
 	tmpl, err := template.New("template").Funcs(funcMap).Parse(templateHTML)
 	if err != nil {
-		panic(err)
+		fmt.Printf("An error occurred while parsing the report template file: %s\n", err)
+		os.Exit(1)
 	}
 
 	file, err := os.Create(outFilename)
 	if err != nil {
-		panic(err)
+		fmt.Printf("An error occurred while creating the report file: %s\n", err)
+		os.Exit(1)
 	}
 
 	fileWriter := bufio.NewWriter(file)
-
 	templateStruct, err := tree.ToTemplateData()
 	if err != nil {
-		panic(err)
+		fmt.Printf("An error occurred while converting the internal test output representation to template data: %s\n", err)
+		os.Exit(1)
 	}
 
 	templateStruct.Dependencies = dependencies
 	err = tmpl.ExecuteTemplate(fileWriter, "template", templateStruct)
 	if err != nil {
-		panic(err)
+		fmt.Printf("An error occurred while assembling the test report: %s\n", err)
+		os.Exit(1)
 	}
 
 	fileWriter.Flush()

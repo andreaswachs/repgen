@@ -34,11 +34,11 @@ type Test struct {
 }
 
 /*
-Representation of a test as not being able to have nested tests.
+Representation of a test as a data transfer object.
 This exists for inputting content into the template, where we have a hard time
 traversing these nested recursive structures
 */
-type SingleTest struct {
+type TestDTO struct {
 	Name        string
 	Elapsed     string
 	ElapsedSec  float64
@@ -54,9 +54,9 @@ A data transfer object that moves test into the report template
 */
 type TemplateData struct {
 	Dependencies map[string]string
-	Packages []string
-	Tests    []*SingleTest
-	Passed   int
-	Failed   int
-	Skipped  int
+	Packages     []string
+	Tests        []*TestDTO
+	Passed       int
+	Failed       int
+	Skipped      int
 }

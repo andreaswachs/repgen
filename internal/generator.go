@@ -47,7 +47,7 @@ func (t *Tests) ToTemplateData() (*TemplateData, error) {
 		return nil, err
 	}
 
-	filteredTests := make([]*SingleTest, 0)
+	filteredTests := make([]*TestDTO, 0)
 	for _, test := range tests {
 		if test.Name == "" {
 			continue
@@ -81,8 +81,8 @@ func (t *Tests) ToTemplateData() (*TemplateData, error) {
 	}, nil
 }
 
-func (t *Tests) ToFlatStructure() ([]*SingleTest, error) {
-	flatTests := make([]*SingleTest, 0)
+func (t *Tests) ToFlatStructure() ([]*TestDTO, error) {
+	flatTests := make([]*TestDTO, 0)
 	for _, pack := range t.Packages {
 		for _, test := range pack.Tests {
 			tests, err := test.getFlatTests(pack.Name)
@@ -359,13 +359,13 @@ func (t *Tests) addOutput(f TestOutputLine) error {
 	return nil
 }
 
-func (t *Test) ToSingleTest(p string) *SingleTest {
+func (t *Test) ToSingleTest(p string) *TestDTO {
 	// All unknown status tests are failed tests (that is the assumption at least)
 	if t.Status == Unknown {
 		t.Status = Fail
 	}
 
-	return &SingleTest{
+	return &TestDTO{
 		Name:        t.Name,
 		Elapsed:     time.Duration(t.Elapsed * float64(time.Second)).String(),
 		ElapsedSec:  t.Elapsed,
@@ -377,8 +377,8 @@ func (t *Test) ToSingleTest(p string) *SingleTest {
 	}
 }
 
-func (t *Test) getFlatTests(p string) ([]*SingleTest, error) {
-	tests := make([]*SingleTest, 0)
+func (t *Test) getFlatTests(p string) ([]*TestDTO, error) {
+	tests := make([]*TestDTO, 0)
 	tests = append(tests, t.ToSingleTest(p))
 
 	for _, t := range t.NestedTests {
