@@ -14,29 +14,6 @@ import (
 //go:embed template.html
 var templateHTML string
 
-//go:embed daisyui.css
-var daisyuiCSS string
-
-//go:embed jquery.js
-var jqueryJS string
-
-//go:embed tailwind.js
-var tailwindJS string
-
-//go:embed datatables.js
-var datatablesJS string
-
-//go:embed datatables.css
-var datatablesCSS string
-
-var dependencies = map[string]string{
-	"daisyui.css":    daisyuiCSS,
-	"jquery.js":      jqueryJS,
-	"tailwind.js":    tailwindJS,
-	"datatables.js":  datatablesJS,
-	"datatables.css": datatablesCSS,
-}
-
 func Run(inReader io.Reader, outFilename string) {
 	tree := NewTests()
 	err := StreamTestOutput(inReader, func(f TestOutputLine) error {
@@ -89,7 +66,6 @@ func Run(inReader io.Reader, outFilename string) {
 		os.Exit(1)
 	}
 
-	templateStruct.Dependencies = dependencies
 	err = tmpl.ExecuteTemplate(fileWriter, "template", templateStruct)
 	if err != nil {
 		fmt.Printf("An error occurred while assembling the test report: %s\n", err)
