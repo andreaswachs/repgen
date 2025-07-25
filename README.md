@@ -12,6 +12,10 @@ Using the Go CLI tool with version minimum `1.24.5` run the following command:
 go install github.com/andreaswachs/repgen@v0.5.1
 ```
 
+## Precompiled Binaries
+
+Precompiled binaries for the most popular platforms and architectures are available on the [releases page](https://github.com/andreaswachs/repgen/releases). You can download the appropriate binary for your system without needing to install Go or build from source.
+
 ## Usage
 
 By default, `repgen` reads the JSON data from stdin and writes the report to `report.html` in the current directory.
