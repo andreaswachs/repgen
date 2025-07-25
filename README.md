@@ -6,10 +6,10 @@ The test reults within the report is viewed in a table that supports column orde
 
 ## Installation
 
-Using the Go CLI tool with version minimum `1.21` run the following command:
+Using the Go CLI tool with version minimum `1.24.5` run the following command:
 
 ```sh
-go install github.com/andreaswachs/repgen@v0.5.0
+go install github.com/andreaswachs/repgen@v0.5.1
 ```
 
 ## Usage
