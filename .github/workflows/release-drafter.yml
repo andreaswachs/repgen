@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
@@ -17,6 +15,79 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
       - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Go APP_VERSION constant to match drafted release
+        run: |
+          set -e
+          # Get the latest draft release version from GitHub API
+          latest_version=$(gh release view --json tagName --jq .tagName || echo "")
+          if [ -z "$latest_version" ]; then
+            echo "No release tag found. Skipping version update."
+            exit 0
+          fi
+          # Remove leading 'v' if present
+          latest_version=${latest_version#v}
+          # Update the APP_VERSION in internal/meta.go if needed
+          file="internal/meta.go"
+          current_version=$(grep 'APP_VERSION' "$file" | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ "$current_version" != "$latest_version" ]; then
+            echo "Updating APP_VERSION from $current_version to $latest_version"
+            sed -i.bak -E 's/(APP_VERSION = \")([^\"]+)(\")/\1'"$latest_version"'\3/' "$file"
+            rm "$file.bak"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$file"
+            git commit -m "chore: align APP_VERSION with drafted release $latest_version"
+            git push
+          else
+            echo "APP_VERSION already matches the drafted release version."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        continue-on-error: true
+      - name: Get latest draft release tag
+        id: get_tag
+        run: |
+          tag=$(gh release list --limit 1 --json isDraft,tagName | grep 'true' | head -n1 | sed -E 's/.*"tagName":"([^"]+)".*/\1/')
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build binaries for popular platforms
+        id: build_binaries
+        run: |
+          platforms=(
+            "linux amd64"
+            "linux arm64"
+            "darwin amd64"
+            "darwin arm64"
+            "windows amd64"
+          )
+          mkdir -p dist
+          for entry in "${platforms[@]}"; do
+            set -- $entry
+            GOOS=$1
+            GOARCH=$2
+            ext=""
+            [ "$GOOS" = "windows" ] && ext=".exe"
+            out="dist/repgen-$GOOS-$GOARCH$ext"
+            echo "Building $out"
+            GOOS=$GOOS GOARCH=$GOARCH go build -o "$out" ./main.go
+          done
+        shell: bash
+      - name: Upload binaries to draft release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          draft: true
+          files: dist/*
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
