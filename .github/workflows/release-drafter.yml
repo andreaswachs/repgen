@@ -46,7 +46,7 @@ jobs:
           # Update the README version (with leading v)
           readme="README.md"
           if grep -qE 'go install github.com/andreaswachs/repgen@v[0-9]+\.[0-9]+\.[0-9]+' "$readme"; then
-            sed -i.bak -E 's@(go install github.com/andreaswachs/repgen@)v[0-9]+\.[0-9]+\.[0-9]+@\1'"$latest_version"'@' "$readme"
+            sed -i.bak -E 's#(go install github.com/andreaswachs/repgen@)v[0-9]+\.[0-9]+\.[0-9]+#\1'"$latest_version"'#' "$readme"
             rm "$readme.bak"
             updated=1
           fi
