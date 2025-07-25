@@ -9,7 +9,7 @@ The test reults within the report is viewed in a table that supports column orde
 Using the Go CLI tool with version minimum `1.24.5` run the following command:
 
 ```sh
-go install github.com/andreaswachs/repgen@v0.5.1
+go install github.com/andreaswachs/repgen@v0.6.0
 ```
 
 ## Precompiled Binaries
