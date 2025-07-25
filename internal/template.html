@@ -1,111 +1,415 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title></title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <!-- JQuery -->
-        <script>
-            {{ index .Dependencies "jquery.js" }}
-        </script>
-
-        <!-- DaisyUI -->
-        <style>
-            {{ index .Dependencies "daisyui.css" }}
-        </style>
-
-        <!-- Tailwind -->
-        <script>
-            {{ index .Dependencies "tailwind.js" }}
-        </script>
-
-        <!-- DataTables -->
-        <style>
-            {{ index .Dependencies "datatables.css" }}
-        </style>
-        <script>
-            {{ index .Dependencies "datatables.js" }}
-        </script>
-    </head>
-    <body>
-        <div class="container mx-auto flex flex-col w-full">
-            <div class="grid place-items-center">
-                <div class="navbar bg-base-100">
-                    <div class="flex-1">
-                        <a class="btn btn-ghost normal-case text-xl">repgen report</a>
-                    </div>
-                    <div class="flex-none">
-                        <ul class="menu menu-horizontal px-1">
-                            <li><a class="btn btn-primary align-middle" onclick="table.column(2).search('(pass|fail|skip|unknown)', true, false).draw()">All: {{ sumTests .Passed .Failed .Skipped }}</a></li>
-                            <li><a class="btn btn-success align-middle" onclick="table.column(2).search('pass', true, false).draw()">Passed: {{ .Passed }}</a></li>
-                            <li><a class="btn btn-error   align-middle" onclick="table.column(2).search('fail', true, false).draw()">Failed: {{ .Failed }}</a></li>
-                            <li><a class="btn btn-warning align-middle" onclick="table.column(2).search('skip', true, false).draw()">Skipped: {{ .Skipped }}</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div> 
-            <div class="divider"></div> 
-            <div class="grid h-20 card bg-base-300 rounded-box place-items-center">
-                <div class="w-full max-w-full">
-                    <div class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-soft-xl rounded-2xl bg-clip-border">
-                        <div class="table-responsive">
-                            <table class="table table-flush text-slate-500 table-zebra" datatable id="datatable-search">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Package</th>
-                                        <th>Status</th>
-                                        <th>Elapsed</th>
-                                        <th>Output</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Iterate over tests with Go template language -->
-                                    {{ range $i, $t := .Tests }}
-
-                                    <!-- Begin with different tr's with CSS classes depending on the status of the test -->
-                                    <tr>
-                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Name }}" data-filter="name:{{ $t.Name }}">{{ $t.Name }}</td>
-                                        <td class="font-normal leading-normal text-sm" data-search="{{ $t.Package }}" data-filter="package:{{ $t.Package }}">{{ $t.Package }}</td>
-                                        <td class="font-normal leading-normal text-sm" data-order="{{ $t.Status }}" data-filter="status:{{ $t.Status }}">{{ $t.FancyStatus }}</td>
-                                        <td class="font-normal leading-normal text-sm" data-order="{{ $t.ElapsedSec }}" data-filter="elapsed:{{ $t.Elapsed }}">{{ $t.Elapsed }}</td>
-                                        <td class="font-normal leading-normal text-sm">
-
-                                            <!-- The button to open modal -->
-                                            <label for="modal_{{ $i }}" class="btn btn-primary">View output</label>
-
-                                            <!-- Put this part before </body> tag -->
-                                            <input type="checkbox" id="modal_{{ $i }}" class="modal-toggle" />
-                                            <div class="modal">
-                                                <div class="modal-box w-11/12 max-w-5xl">
-                                                    <h3 class="text-lg font-bold">
-                                                        Output for "{{ $t.Name }}"
-                                                    </h3>
-                                                    <p class="py-4"><div class="mockup-code">
-                                                        <!-- Go through output for each line, and print it -->
-                                                        {{ range $j, $l := $t.Output }}
-                                                        <pre data-prefix="{{ $j }}"><code>{{ $l }}</code></pre>
-                                                        {{end}}
-                                                    </div></p>
-                                                </div>
-                                                <label class="modal-backdrop" for="modal_{{ $i }}">Close</label>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {{ end }}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Report Results</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 24px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px 0 rgba(30,41,59,0.08);
+            padding: 32px;
+        }
+        .header-row {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: stretch;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        @media (min-width: 640px) {
+            .header-row {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0f172a;
+            margin: 0;
+        }
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 256px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 36px 8px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .search-input:focus {
+            box-shadow: 0 0 0 2px #3b82f6;
+            border-color: #3b82f6;
+        }
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        thead {
+            background: #f1f5f9;
+        }
+        th, td {
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        th {
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        tr {
+            transition: background 0.2s;
+        }
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px 0;
+            color: #64748b;
+        }
+        .sortable-header {
+            cursor: pointer;
+            position: relative;
+            padding-right: 1.5rem;
+        }
+        .sortable-header::after {
+            content: '↕';
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+        .sortable-header:hover::after {
+            opacity: 1;
+        }
+        .sortable-header.asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        .sortable-header.desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border-radius: 999px;
+        }
+        .status-passed {
+            background: #bbf7d0;
+            color: #166534;
+        }
+        .status-failed {
+            background: #fecaca;
+            color: #991b1b;
+        }
+        .status-skipped {
+            background: #fef9c3;
+            color: #92400e;
+        }
+        .log-btn {
+            color: #2563eb;
+            background: none;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0;
+        }
+        .log-btn:hover {
+            text-decoration: underline;
+        }
+        .terminal {
+            font-family: 'Fira Code', monospace;
+            background-color: #1E293B;
+            color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .terminal::-webkit-scrollbar {
+            width: 8px;
+        }
+        .terminal::-webkit-scrollbar-track {
+            background: #334155;
+        }
+        .terminal::-webkit-scrollbar-thumb {
+            background-color: #64748B;
+            border-radius: 4px;
+        }
+        /* Modal styles */
+        .modal-bg {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-bg.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 32px 0 rgba(30,41,59,0.16);
+            width: 100%;
+            max-width: 700px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        .modal-bg.active .modal-content {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-close:hover {
+            color: #334155;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header-row">
+                <h1 class="title">Test Report Results</h1>
+                <div class="search-box">
+                    <input type="text" id="filterInput" placeholder="Filter results..." class="search-input">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
                 </div>
             </div>
+            <div class="table-container">
+                <table>
+                    <thead id="table-headers">
+                        <!-- Headers will be dynamically inserted here -->
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="no-results" class="no-results" style="display:none;">
+                <p>No results found.</p>
+            </div>
         </div>
-        <script>
-            var table = new DataTable('#datatable-search', {
-                pageLength: 25,
-                order: [[2, 'asc']],
+    </div>
+    <div id="log-modal" class="modal-bg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Log Details</h3>
+                <button id="close-modal-btn" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <pre id="log-content" class="terminal"><code><!-- Log content will be injected here --></code></pre>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            // The Go template will generate the test data as a JSON array.
+            const sampleData = [
+                {{- range $i, $t := .Tests }}
+                {
+                    testId: {{ $i }},
+                    testName: {{ printf "%q" $t.Name }},
+                    status: {{ printf "%q" $t.FancyStatus }},
+                    durationMs: {{ printf "%.0f" $t.ElapsedSec }},
+                    timestamp: {{ printf "%q" (formatRFC3339 $t.Time) }},
+                    logData: {{ printf "%q" (join $t.Output "\n") }}
+                }{{if lt (add $i 1) (len $.Tests)}},{{end}}
+                {{- end }}
+            ];
+            // --- STATE ---
+            let currentData = [...sampleData];
+            let sortState = { column: null, direction: 'asc' };
+            // --- DOM ELEMENTS ---
+            const tableHeadersContainer = document.getElementById('table-headers');
+            const tableBody = document.getElementById('table-body');
+            const filterInput = document.getElementById('filterInput');
+            const noResultsMessage = document.getElementById('no-results');
+            const logModal = document.getElementById('log-modal');
+            const logModalContent = document.getElementById('log-modal-content');
+            const logContentContainer = document.getElementById('log-content');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            // --- FUNCTIONS ---
+            const renderHeaders = () => {
+                if (sampleData.length === 0) return;
+                const headers = Object.keys(sampleData[0]);
+                const headerRow = document.createElement('tr');
+                headers.forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key === 'logData' ? 'Logs' : key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    if (key !== 'logData') {
+                        th.classList.add('sortable-header');
+                        th.dataset.column = key;
+                    }
+                    headerRow.appendChild(th);
+                });
+                tableHeadersContainer.innerHTML = '';
+                tableHeadersContainer.appendChild(headerRow);
+            };
+            const renderTable = (data) => {
+                tableBody.innerHTML = '';
+                noResultsMessage.style.display = data.length > 0 ? 'none' : 'block';
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    Object.entries(item).forEach(([key, value]) => {
+                        const cell = document.createElement('td');
+                        if (key === 'logData') {
+                            const button = document.createElement('button');
+                            button.textContent = 'View Logs';
+                            button.className = 'log-btn';
+                            button.dataset.log = value;
+                            cell.appendChild(button);
+                        } else if (key === 'status') {
+                            let statusClass = '';
+                            if (String(value).toLowerCase().includes('pass')) statusClass = 'status status-passed';
+                            else if (String(value).toLowerCase().includes('fail')) statusClass = 'status status-failed';
+                            else if (String(value).toLowerCase().includes('skip')) statusClass = 'status status-skipped';
+                            cell.innerHTML = `<span class="${statusClass}">${value}</span>`;
+                        } else {
+                            cell.textContent = value;
+                        }
+                        row.appendChild(cell);
+                    });
+                    tableBody.appendChild(row);
+                });
+            };
+            const sortData = (column) => {
+                const direction = (sortState.column === column && sortState.direction === 'asc') ? 'desc' : 'asc';
+                sortState = { column, direction };
+                currentData.sort((a, b) => {
+                    const valA = a[column];
+                    const valB = b[column];
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                document.querySelectorAll('.sortable-header').forEach(header => {
+                    header.classList.remove('asc', 'desc');
+                    if (header.dataset.column === column) header.classList.add(direction);
+                });
+                renderTable(currentData);
+            };
+            const filterData = () => {
+                const query = filterInput.value.toLowerCase();
+                const filteredData = sampleData.filter(item => 
+                    Object.values(item).some(value => String(value).toLowerCase().includes(query))
+                );
+                currentData = filteredData;
+                if(sortState.column) {
+                    const currentDirection = sortState.direction;
+                    sortState.direction = currentDirection === 'asc' ? 'desc' : 'asc';
+                    sortData(sortState.column);
+                } else {
+                    renderTable(currentData);
+                }
+            };
+            const openModal = (logText) => {
+                logContentContainer.textContent = logText;
+                logModal.classList.add('active');
+            };
+            const closeModal = () => {
+                logModal.classList.remove('active');
+            };
+            tableHeadersContainer.addEventListener('click', (e) => {
+                const header = e.target.closest('.sortable-header');
+                if (header) sortData(header.dataset.column);
             });
-        </script>
-        </body>
+            tableBody.addEventListener('click', (e) => {
+                const button = e.target.closest('.log-btn');
+                if (button) {
+                    openModal(button.dataset.log);
+                }
+            });
+            filterInput.addEventListener('input', filterData);
+            closeModalBtn.addEventListener('click', closeModal);
+            logModal.addEventListener('click', (e) => {
+                if (e.target === logModal) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && logModal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+            renderHeaders();
+            renderTable(currentData);
+        });
+    </script>
+</body>
 </html>

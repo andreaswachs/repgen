@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/template"
+	"time"
 )
 
 //go:embed template.html
@@ -48,6 +50,23 @@ func Run(inReader io.Reader, outFilename string) {
 	funcMap := template.FuncMap{
 		"sumTests": func(a int, b int, c int) int {
 			return a + b + c
+		},
+		"join": strings.Join,                        // Add join function for templates
+		"add":  func(a, b int) int { return a + b }, // Add function for index math
+		"len": func(x interface{}) int {
+			switch v := x.(type) {
+			case []interface{}:
+				return len(v)
+			case []string:
+				return len(v)
+			case []*TestDTO:
+				return len(v)
+			default:
+				return 0
+			}
+		},
+		"formatRFC3339": func(t time.Time) string {
+			return t.Format(time.RFC3339)
 		},
 	}
 
