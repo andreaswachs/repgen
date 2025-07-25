@@ -372,7 +372,7 @@ func (t *Test) ToSingleTest(p string) *TestDTO {
 		Time:        t.Time,
 		Output:      strings.Split(t.Output, "\n"),
 		Status:      t.Status.String(),
-		FancyStatus: t.Status.FancyString(),
+		FancyStatus: t.Status.String(),
 		Package:     p,
 	}
 }
